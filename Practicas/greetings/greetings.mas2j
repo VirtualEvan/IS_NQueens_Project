@@ -1,0 +1,17 @@
+/* Jason Project */
+
+MAS greetings {
+
+    infrastructure: Centralised
+
+    environment: TestEnv
+
+    agents:
+        bob;
+
+        tom;
+
+        liz;
+
+}
+

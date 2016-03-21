@@ -1,0 +1,32 @@
+% funcion  general que recibe el numero de reinas y tamaño del tablero en la variable N
+% realiza todas las comprobaciones, obtiene los resltados y los combina para obtener
+% el par de coordenadas de cada casilla ocupada
+reinas(N,F) :- espacios(N,Tablero), giro(Tablero,R), noAmenazadas(R),combinar(R,[1,2,3,4,5,6,7,8],F) .
+
+% Establece el tablero del tamaño especificado por N en la funcion general
+espacios(0,[]).
+espacios(X,[X|R]) :- Aux is X - 1, Aux >= 0, espacios(Aux,R).
+
+% Comprueba los casos en los que una solucion es un cambio de orden en la lista de "solucion"
+giro([],[]).
+giro(X,[C|Z]) :- eliminar(C,X,R), giro(R,Z).
+
+% Toma una lista y un elemento y devuelve la misma lista sin el elemento
+eliminar(X,[X|R],R).
+eliminar(X,[C|R],[C|Y]) :- eliminar(X,R,Y).
+
+% Comprueba que ninguna de las reinas colocadas en el tablero este amenazada por otra
+noAmenazadas([]).
+noAmenazadas([F|R]) :- not(filacolumna(F,R)), noAmenazadas(R).
+
+% Realiza la comprobacion en filas y columnas para las reinas colocadas (filas y columnas amenazadas)
+filacolumna(X,Casilla,[C|_]) :- X is C+Casilla; X is C-Casilla; X = C.
+filacolumna(X,Casilla,[_|R]) :- Aux is Casilla + 1, filacolumna(X,Aux,R).
+
+filacolumna(_,[]) :- fail.
+filacolumna(X,Y) :- filacolumna(X,1,Y).
+
+% Combina las filas resultantes con los numeros de columnas correspondientes para obtener las
+% coordenadas exactas de cada reina en el tablero
+combinar([],_,[]).
+combinar([Car|Cdr],[Car1|Cdr1],[[Car,Car1]|R]):-combinar(Cdr, Cdr1,R).
