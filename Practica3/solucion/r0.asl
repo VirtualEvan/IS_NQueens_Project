@@ -26,102 +26,101 @@ diagonal(X1,Y1) :-
 
 /* Plans */
 +!start :playAs(0) <-
-	queen(0,0).
+	!play.
 
 +!start :playAs(1) <- true.
 
 +size(N)<- !crearTablero(N).
 
-// ----- Crea un tablero de casillas libres con el numero de casillas que amenaza cada una -----
+/* ----- Crea un tablero de casillas libres con el numero de casillas que amenaza cada una ----- */
 +!crearTablero(N) <-
-	for(.range(I,0,N-1)){
-		for(.range(J,0,N-1)){
-			+free(I,J,N*N);
+	for(.range(X,0,N-1)){
+		for(.range(Y,0,N-1)){
+			+free(X,Y,N*N);
 		}
 	}.
 
 +queen(X,Y) [source(percept)] : playAs(N)<-
-	.print("Actualizar base de conocimientos");
+	.print("Actualizando base de conocimientos");
 	!ocupar;
-  .print("Hola");
 	!amenazadas;
-  .print("Adios")
   .
 
 
-// ----- Elimina casillas que no son libres -----
+/* ----- Elimina casillas que no son libres ----- */
 +!ocupar: size(N)  <-
-	for(.range(I,0,N-1)){
-		for(.range(J,0,N-1)){
-			if (check(I,J)){
-				-free(I,J,_);
-       // .print(I,",",J);
+	for(.range(X,0,N-1)){
+		for(.range(Y,0,N-1)){
+			if (check(X,Y)){
+				-free(X,Y,_);
 			}
 		}
 	}.
 -!ocupar.
 
 
-// ----- Actualiza el contador de casillas libres amenazadas -----
+/* ----- Actualiza el contador de casillas libres amenazadas ----- */
 +!amenazadas <-
 	?size(N);
+  +cont(0);
 	for(free(X,Y,AM)){
-    +cont(0);
-    ?cont(AUX);
-		for(.range(I,0,N-1)){
+    -+cont(0);
+
+    // Número de casillas amenazadas en filas y columnas
+    .findall(pos(_,X,Y),
+            //Condiciones
+            free(X,_,_) |
+            free(_,Y,_) ,
+            //Salida
+            FilaColumna);
+
+    // Número de casillas amenazadas en diagonales
+    for(.range(I,0,N-1)){
 			for(.range(J,0,N-1)){
-        ?cont(AUX);
-        .print("X:",X," Y:",Y," I:",I," J:",J," AUX:",AUX);
-				if(free(X,J,_)){
-          +cont(AUX+1);
-         // -cont(AUX);
+        if(free(I,J,_)&((X-I == Y-J)|(I-X == Y-J))){
+          ?cont(AUX);
+          -+cont(AUX+1);
 				}
-				if(free(I,Y,_)){
-          +cont(AUX+1);
-         // -cont(AUX);
-				}
-				if(free(I,J,_)&((X-I == Y-J)|(I-X == Y-J))){
-          +cont(AUX+1);
-         // -cont(AUX);
-				}
-			}
-		}
-    ?cont(AUX);
+      }
+    }
+
+    .length(FilaColumna,FC);
+    ?cont(Diagonales);
+
 		-free(X,Y,AM);
-		+free(X,Y,AUX);
-   // ?free(W,V,HELP);
-   // .print(HELP);
+    //La casilla X,Y se cuenta como amenazada tanto en filas como columnas como diagonales (-2)
+		+free(X,Y,FC+Diagonales-2);
 	}
   .abolish(cont(_)).
 -!amenazadas<-.print("ERROR AMENAZADAS").
 
-// ----- Juegan Blancas -----
+/* ----- Turno Blancas ----- */
 +player(0):playAs(0) <-
 	-player(0)[source(percept)];
-	!jugar.
+	!play.
 
 
-// ----- Juegan Negras -----
+/* ----- Turno Negras ----- */
 +player(1):playAs(1) <-
 	-player(1)[source(percept)];
-	!jugar.
+	!play.
 
-// ----- Jugar -----
-+!jugar <-
-	!select(ListaPosiciones);
-	.print("POSICION: ",ListaPosiciones);
-  .nth(0,ListaPosiciones,First);
-  !getPosition(First, X,Y);
-  queen(X,Y)
-	.
--!jugar <-.print("Juego Finalizado").
+/* ----- Jugar ----- */
++!play <-
+	!select(Max);
+  .print("Maximo: ", Max);
+  !getPosition(Max, X,Y);
+  queen(X,Y).
+-!play <-.print("Juego Finalizado").
 
-+!getPosition(pos(X,Y,N),X,Y).
++!getPosition(pos(N,X,Y),X,Y).
 
 
-// ----- Movemos al agente a la posicion libre que mas posiciones libres amenaza -----
-+!select(ListaPosiciones) <-
+/* ----- Seleccionar la Posición con mayor número de amenazadas ----- */
++!select(Max) <-
 	.wait(700);
-  .findall(pos(X,Y,N),free(X,Y,N),ListaPosiciones)
-	.
--!select(ListaPosiciones)<-.print("ERROR SELECT").
+  //NumAmenazadas,X,Y
+  .findall(pos(N,X,Y),free(X,Y,N),ListaPosiciones);
+  .print("Posiciones posibles: ",ListaPosiciones);
+  .max(ListaPosiciones,Max).
+-!select(Max) <- Max = [].
