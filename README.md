@@ -1,2 +1,2 @@
-# practicas_si
-Prácticas de Sistemas Inteligentes
+# IS_Projects
+Intelligent Systems Assignaments 
