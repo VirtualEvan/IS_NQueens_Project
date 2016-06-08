@@ -25,9 +25,9 @@ public class QueensEnv extends Environment {
     public static final int GSize  =   8; // grid size
     public static final int EMPTY  =   8; // empty cell code in grid model
     public static final int ATACK  =  16; // empty cell code in grid model
-    public static final int HOLE   =  32; // hole in a cell code in grid model
-    public static final int QUEEN  =  64; // queen code in grid model
-    public static final int BLOCK  = 128; // block in a cell code in grid model
+    public static final int HOLE   =  64; // hole in a cell code in grid model
+    public static final int BLOCK  = 128; // queen code in grid model
+    public static final int QUEEN  = 256; // block in a cell code in grid model
 
     public static final Term    pq = Literal.parseLiteral("put(queen)");
 
@@ -36,6 +36,10 @@ public class QueensEnv extends Environment {
     private QueensModel model;
     private QueensView  view;
 	private int queensPlaced;
+	private Location wQueens[];
+	private Location bQueens[];
+	private Location blocks[];
+	
 	
     
     @Override
@@ -45,6 +49,8 @@ public class QueensEnv extends Environment {
         model.setView(view);
         updatePercepts();
 		queensPlaced = 0;
+		wQueens = new Location[GSize/2];
+		bQueens = new Location[GSize/2];
     }
     
     @Override
@@ -68,10 +74,14 @@ public class QueensEnv extends Environment {
 								int y = (int)((NumberTerm)action.getTerm(1)).solve();
 								model.clean(x,y);
             				} else if (action.getFunctor().equals("block")) {
+									int x = (int)((NumberTerm)action.getTerm(0)).solve();
+									int y = (int)((NumberTerm)action.getTerm(1)).solve();
+									model.putBlock(x,y);
+								} else if (action.getFunctor().equals("hole")) {
 										int x = (int)((NumberTerm)action.getTerm(0)).solve();
 										int y = (int)((NumberTerm)action.getTerm(1)).solve();
-										model.putBlock(x,y);
-								} else {
+										model.putHole(x,y);
+								} else{
 										return false;
 										}
         } catch (Exception e) {
@@ -145,45 +155,142 @@ public class QueensEnv extends Environment {
 			Literal queen = Literal.parseLiteral("queen(" + x + "," + y + ")");
 			addPercept(queen);
 			queensPlaced++;
+			cellAttacked(x,y);
+			if (queensPlaced%2==1){
+				try {
+					Thread.sleep(300);
+        		} catch (Exception e) {}
+			};
 			turn = Literal.parseLiteral("player(" + queensPlaced%2 + ")");
 			addPercept(turn);
-			cellAttacked(x,y);
         }
 		
 		void putBlock(int x, int y) throws Exception {
+			Literal turn = Literal.parseLiteral("player(" + queensPlaced%2 + ")");
+			removePercept(turn);
+			if (hasObject(ATACK, x, y) ) {
+						freeAttack(x, y);
+					};
             add(BLOCK, x, y);
 			Literal block = Literal.parseLiteral("block(" + x + "," + y + ")");
 			addPercept(block);
-        }
+ 			freeCellAttacked(x,y);
+ 			addPercept(turn);
+      }
 		
+		void putHole(int x, int y) throws Exception {
+			Literal turn = Literal.parseLiteral("player(" + queensPlaced%2 + ")");
+			removePercept(turn);
+			if (hasObject(ATACK, x, y) ) {
+						freeAttack(x, y);
+					};
+            add(HOLE, x, y);
+			Literal hole = Literal.parseLiteral("hole(" + x + "," + y + ")");
+			addPercept(hole);
+ 			addPercept(turn);
+      }
+        void freeCellAttacked(int x, int y) {
+ 			Literal attackCell;
+			for (int j = 0; j < GSize; j++) {
+					//if (hasObject(ATACK, x, j) &  !attacked(x,j)) {
+						// libera una posición vertical que ha sido  bloqueada
+						//freeAttack(x, y);
+					//}
+			};
+			for (int j = 0; j < GSize; j++) {
+					//if (hasObject(ATACK, j, y) &  !attacked(j,y)) {
+						// libera una posición horizontal que ha sido  bloqueada
+						//freeAttack(x, y);
+					//}
+			};
+			for (int i = 0; i < GSize; i++) {
+				for (int j = 0; j < GSize; j++) {
+					if (hasObject(QUEEN, i, j) ) {
+						cellAttacked(i,j);
+					}
+				}
+			};
+			try {
+				Thread.sleep(200);
+       		} catch (Exception e) {};
+        }
+
         void cellAttacked(int x, int y) {
  			Literal attackCell;
 			int col;
-			for (int i = 0; i < GSize; i++) {
+			int inf = 0;
+			int sup = GSize;
+			// horizontal attack
+			for (int i = 0; i < x; i++) {
+				if (hasObject(BLOCK, i, y)) {inf=i;};
+			};
+			for (int i = GSize; i > x; i--) {
+				if (hasObject(BLOCK, i, y)) {sup=i;};
+			};
+			for (int i = inf; i < sup; i++) {
 				if (i != x & isFree(ATACK, i, y) ) {
 					add(ATACK, i, y);
 					attackCell = Literal.parseLiteral("attack(" + i + "," + y + ")");
 					addPercept(attackCell);
 				};
-				if (i != y) {
-					if (isFree(ATACK, x, i)) {
-						add(ATACK, x, i);
-						attackCell = Literal.parseLiteral("attack(" + x + "," + i + ")");
-					addPercept(attackCell);};
-					col= x-i+y;
-					if ((0 <= col) & (GSize > col) & isFree(ATACK, col, i)) {
-						add(ATACK, col, i);
-						attackCell = Literal.parseLiteral("attack(" + col + "," + i + ")");
-						addPercept(attackCell);
-					};
-					col= x+i-y;
-					if ((GSize > col) & (0 <= col) & isFree(ATACK, col, i)){
-						add(ATACK, col, i);
-						attackCell = Literal.parseLiteral("attack(" + col + "," + i + ")");
-						addPercept(attackCell);
-					};
-				}
+			}
+			try {
+				Thread.sleep(100);
+       		} catch (Exception e) {};
+			// vertical attack
+			for (int j = 0; j < y; j++) {
+				if (hasObject(BLOCK, x, j)) {inf=j;};
 			};
+			for (int j = GSize; j > y; j--) {
+				if (hasObject(BLOCK, x, j)) {sup=j;};
+			};
+			for (int j = inf; j < sup; j++) {
+				if (j != y & isFree(ATACK, x, j) ) {
+					add(ATACK, x, j);
+					attackCell = Literal.parseLiteral("attack(" + x + "," + j + ")");
+					addPercept(attackCell);
+				};
+			}
+			try {
+				Thread.sleep(100);
+       		} catch (Exception e) {};
+			// diagonal1 attack
+			for (int j = 0; j < y; j++) {
+				col= x-j+y;
+				if (hasObject(BLOCK, x, j)) {inf=j;};
+			};
+			for (int j = GSize; j > y; j--) {
+				col= x-j+y;
+				if (hasObject(BLOCK, x, j)) {sup=j;};
+			};
+			for (int j = inf; j < sup; j++) {
+				col= x-j+y;
+				if (j != y & (0 <= col) & (GSize > col) & isFree(ATACK, col, j) ) {
+					add(ATACK, col, j);
+					attackCell = Literal.parseLiteral("attack(" + col + "," + j + ")");
+					addPercept(attackCell);
+				};
+			}
+			try {
+				Thread.sleep(100);
+       		} catch (Exception e) {};
+			// diagonal2 attack
+			for (int j = 0; j < y; j++) {
+				col= x+j-y;
+				if (hasObject(BLOCK, x, j)) {inf=j;};
+			};
+			for (int j = GSize; j > y; j--) {
+				col= x+j-y;
+				if (hasObject(BLOCK, x, j)) {sup=j;};
+			};
+			for (int j = inf; j < sup; j++) {
+				col= x+j-y;
+				if (j != y & (0 <= col) & (GSize > col) & isFree(ATACK, col, j) ) {
+					add(ATACK, col, j);
+					attackCell = Literal.parseLiteral("attack(" + col + "," + j + ")");
+					addPercept(attackCell);
+				};
+			}
 			try {
 				Thread.sleep(100);
        		} catch (Exception e) {};
@@ -196,7 +303,7 @@ public class QueensEnv extends Environment {
 			removePercept(queen);
         }
         
-		void freeAttack(int x, int y) throws Exception {
+		void freeAttack(int x, int y) {
             remove(ATACK,x,y);
 			Literal attackedCell = Literal.parseLiteral("attack(" + x + "," + y + ")");
 			removePercept(attackedCell);
@@ -222,6 +329,7 @@ public class QueensEnv extends Environment {
                 case QueensEnv.EMPTY: drawEmpty(g, x, y);  break;
                 case QueensEnv.QUEEN: drawQueen(g, x, y);  break;
                 case QueensEnv.ATACK: drawAtack(g, x, y);  break;
+                case QueensEnv.HOLE:  drawHole(g, x, y);  break;
                 case QueensEnv.BLOCK: drawObstacle(g, x, y);  break;
             }
         }
@@ -256,6 +364,13 @@ public class QueensEnv extends Environment {
 			g.fillOval(x * cellSizeW + 2, y * cellSizeH + 2, cellSizeW - 4, cellSizeH - 4);
         }
 		
+        public void drawHole(Graphics g, int x, int y) {
+			Color transparent = new Color(255,255,255,90);
+			g.setColor(transparent);
+			g.fillRect(x * cellSizeW + 1, y * cellSizeH+1, cellSizeW-1, cellSizeH-1);
+			g.drawRect(x * cellSizeW, y * cellSizeH, cellSizeW, cellSizeH);
+		}
+
         public void drawQueen(Graphics g, int x, int y) {
 			BufferedImage bqImg = null;
 			BufferedImage wqImg = null;

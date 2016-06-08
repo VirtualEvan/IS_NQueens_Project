@@ -2,17 +2,19 @@
 
 /* Initial beliefs and rules */
 
-comprobar(X,Y) :-
+check(X,Y) :-
   horizontal(X,Y) |
   vertical(X,Y) |
   diagonal(X,Y).
 
 
-horizontal(X,Y) :-
-  queen(X,_).
-
 vertical(X,Y) :-
-  queen(_,Y).
+  (queen(X,_) & not block(X,_)) |
+  (queen(X,YQ) & block(X,YB) & not (((Y < YB) & (YB < YQ)) | ((Y > YB) & (YB > YQ)))).
+
+horizontal(X,Y) :-
+  (queen(_,Y) & not block(_,Y)) |
+  (queen(XQ,Y) & block(XB,Y) & not (((X < XB) & (XB < XQ)) | ((X > XB) & (XB > XQ)))).
 
 diagonal(X1,Y1) :-
   queen(X2,Y2) &
@@ -25,10 +27,10 @@ diagonal(X1,Y1) :-
 !start.
 
 /* Plans */
-+!start :playAs(0) <-
++!start :playAs(0) <- /*block (3,5);*/block (5,5);block (4,6);block (4,4); block(2,3); .wait(1000); queen(4,5);
   !ocupar;
-  !amenazadas;
-  !play.
+  !amenazadas.//;
+ // !play.
 
 +!start :playAs(1) <- true.
 
@@ -41,20 +43,26 @@ diagonal(X1,Y1) :-
 			+free(X,Y,N*N);
 		}
 	}.
-
-+queen(X,Y) [source(percept)] : playAs(N)<-
+/*
++queen(X,Y) [source(percept)] : playAs(N) <-
 	.print("Actualizando base de conocimientos");
 	!ocupar;
-	!amenazadas;
-  .
+	!amenazadas.
 
++block(X,Y) [source(percept)] : playAs(N) <-
+  .print("Actualizando base de conocimientos");
+  !block;
+  !ocupar;
+  !amenazadas.
+*/
 
 /* ----- Elimina casillas que no son libres ----- */
 +!ocupar: size(N)  <-
 	for(.range(X,0,N-1)){
 		for(.range(Y,0,N-1)){
-			if (comprobar(X,Y)){
+			if (check(X,Y)){
 				-free(X,Y,_);
+        .print(X,",",Y);
 			}
 		}
 	}.
@@ -97,32 +105,27 @@ diagonal(X1,Y1) :-
 -!amenazadas<-.print("ERROR AMENAZADAS").
 
 
+/* ----- Turnos ----- */
+// Se ha pasado turno, es mi turno -> *Juego*
 +player(N) : playAs(N) <- .wait(300); !play.
 
+// Se ha pasado turno, es el turno de otro jugador -> *Espero*
 +player(N) : playAs(M) & not N==M <- .wait(300); .print("No es mi turno.").
 
-/* ----- Turno Blancas ----- */
-/*
-+player(0):playAs(0) <-
-	-player(0)[source(percept)];
-	!play.
-*/
 
-/* ----- Turno Negras ----- */
-/*
-+player(1):playAs(1) <-
-	-player(1)[source(percept)];
-	!play.
-*/
-/* ----- Jugar ----- */
+/* ----- Jugar ----- *//*
 +!play <-
 	!select(Max);
   .print("Maximo: ", Max);
   !getPosition(Max, X,Y);
   queen(X,Y).
--!play <-.print("Juego Finalizado").
-
+-!play <- !block; .print("Juego Finalizado").
 +!getPosition(pos(N,X,Y),X,Y).
+
++!block <-
+  .findall(q(X,Y),queen(X,Y),Reinas);
+  .print("LISTAREINAS: ", Reinas).
+-!block <- .print("ERROR al colocar bloque").
 
 
 /* ----- Seleccionar la Posición con mayor número de amenazadas ----- */

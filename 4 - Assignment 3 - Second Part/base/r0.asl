@@ -4,11 +4,11 @@
 
 /* Initial goal */
 
-//!check(slots). 
+//!check(slots).
 !start.
 
 /* Plans */
-+!start : playAs(0) <- 
++!start : playAs(0) <-
 	queen(1,0);
 	.wait(100);
 	.print("Espero mi turno de blancas.");
@@ -29,7 +29,7 @@
 	.wait(500);
 	move_towards(7,7).
 
-+!start : playAs(1) <- 
++!start : playAs(1) <-
 	.print("Espero mi turno de negras.");
 	.wait(play(1));
 	queen(3,1);
