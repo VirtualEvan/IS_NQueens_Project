@@ -19,8 +19,15 @@ vertical(X,Y) :-
 diagonal(X1,Y1) :-
   block(X1,Y1) |
   ( queen(X2,Y2) & ((X1-X2 == Y1-Y2) | (X2-X1 == Y1-Y2)) & not (block(X3,Y3) & ((X1-X3 == Y1-Y3) | (X3-X1 == Y1-Y3))) ) |
-  ( queen(X2,Y2) & (X1-X2 == Y1-Y2) & block(X3,Y3) & (X1-X3 == Y1-Y3) & ((Y3<Y2 & Y2<Y1 & X3<X2 & X2<X1) | (Y3>Y2 & Y2>Y1 & X3>X2 & X2>X1)) ) |
-  ( queen(X2,Y2) & (X2-X1 == Y1-Y2) & block(X3,Y3) & (X3-X1 == Y1-Y3) & ((Y3<Y2 & Y2<Y1 & X3>X2 & X2>X1) | (Y3>Y2 & Y2>Y1 & X3<X2 & X2<X1)) ).
+  ( queen(X2,Y2) & (X1-X2 == Y1-Y2) & block(X3,Y3) & (X1-X3 == Y1-Y3) & ((Y3<Y2 & Y2<Y1 & X3<X2 & X2<X1) | //DiagonalSI (Block-Queen-Space)
+                                                                         (Y3>Y2 & Y2>Y1 & X3>X2 & X2>X1) | //DiagonalID (Block-Queen-Space)
+                                                                         (Y3<Y1 & Y1<Y2 & X3<X1 & X1<X2) | //DiagonalSI (Block-Space-Queen)
+                                                                         (Y3>Y1 & Y1>Y2 & X3>X1 & X1>X2)) ) | //DiagonalID (Block-Space-Queen)
+  ( queen(X2,Y2) & (X2-X1 == Y1-Y2) & block(X3,Y3) & (X3-X1 == Y1-Y3) & ((Y3<Y2 & Y2<Y1 & X3>X2 & X2>X1) | //DiagonalSD (Block-Queen-Space)
+                                                                         (Y3>Y2 & Y2>Y1 & X3<X2 & X2<X1) | //DiagonalII (Block-Queen-Space)
+                                                                         (Y3<Y1 & Y1<Y2 & X3>X1 & X1>X2) | //DiagonalII (Block-Space-Queen)
+                                                                         (Y3>Y1 & Y1>Y2 & X3<X1 & X1<X2)) ). //DiagonalII (Block-Space-Queen)
+
 
 
 /* Initial goals */
@@ -28,7 +35,7 @@ diagonal(X1,Y1) :-
 !start.
 
 /* Plans */
-+!start :playAs(0) <- queen(3,4); .wait(1000); block(3,2); block(1,6).
++!start :playAs(0) <- queen(3,4); .wait(1000); block(5,2); block(1,6).
  // !ocupar;
  // !amenazadas;
  // !play.
