@@ -35,10 +35,9 @@ diagonal(X1,Y1) :-
 !start.
 
 /* Plans */
-+!start :playAs(0) <- queen(3,4); .wait(1000); block(5,2); block(1,6).
- // !ocupar;
- // !amenazadas;
- // !play.
++!start :playAs(0) <- .wait(300);
+  !amenazadas;
+  !play.
 
 +!start :playAs(1) <- true.
 
@@ -56,8 +55,8 @@ diagonal(X1,Y1) :-
 	.print("Actualizando base de conocimientos");
 	!ocupar(X,Y);
  // .findall(pos(PosX,PosY),free(PosX,PosY,_),Lista);
-  .print(Lista);
-	//!amenazadas;
+ // .print(Lista);
+	!amenazadas;
   .
 
 +block(X,Y) [source(percept)] : playAs(N) <-
@@ -79,70 +78,118 @@ diagonal(X1,Y1) :-
   .print(X,",",Y);
 	-free(X,Y,_);
   //Filas
-  !filaDerecha(X+1,Y);
-  !filaIzquierda(X-1,Y);
+  !filaDerecha(X+1,Y,ocupar);
+  !filaIzquierda(X-1,Y,ocupar);
 
   //Columnas
-  !columnaSuperior(X,Y-1);
-  !columnaInferior(X,Y+1);
+  !columnaSuperior(X,Y-1,ocupar);
+  !columnaInferior(X,Y+1,ocupar);
 
   //Diagonales
-  !diagonalSI(X-1,Y-1);
-  !diagonalSD(X+1,Y-1);
-  !diagonalII(X-1,Y+1);
-  !diagonalID(X+1,Y+1).
+  !diagonalSI(X-1,Y-1,ocupar);
+  !diagonalSD(X+1,Y-1,ocupar);
+  !diagonalII(X-1,Y+1,ocupar);
+  !diagonalID(X+1,Y+1,ocupar).
 -!ocupar(X,Y).
 
 //Filas
-+!filaDerecha(X,Y) : size(N) & not block(X,Y) & X<N <-
-  .print(X,",",Y);
-  -free(X,Y,_);
-  !filaDerecha(X+1,Y).
-+!filaDerecha(X,Y).
++!filaDerecha(X,Y,Z) : size(N) & not block(X,Y) & X<N <-
+  if(Z == ocupar){
+    -free(X,Y,_);
+   // .print(X,",",Y);
+  }
+  if(Z == contar & free(X,Y,_)){
+    ?cont(AUX);
+    -+cont(AUX+1);
+  }
+  !filaDerecha(X+1,Y,Z).
++!filaDerecha(X,Y,Z).
 
-+!filaIzquierda(X,Y) : size(N) & not block(X,Y) & X>=0 <-
-  .print(X,",",Y);
-  -free(X,Y,_);
-  !filaIzquierda(X-1,Y).
-+!filaIzquierda(X,Y).
++!filaIzquierda(X,Y,Z) : size(N) & not block(X,Y) & X>=0 <-
+  if(Z == ocupar){
+    -free(X,Y,_);
+   // .print(X,",",Y);
+  }
+  if(Z == contar & free(X,Y,_)){
+    ?cont(AUX);
+    -+cont(AUX+1);
+  }
+  !filaIzquierda(X-1,Y,Z).
++!filaIzquierda(X,Y,Z).
 
 //Columnas
-+!columnaSuperior(X,Y) : size(N) & not block(X,Y) & Y>=0 <-
-  .print(X,",",Y);
-  -free(X,Y,_);
-  !columnaSuperior(X,Y-1).
-+!columnaSuperior(X,Y).
++!columnaSuperior(X,Y,Z) : size(N) & not block(X,Y) & Y>=0 <-
+  if(Z == ocupar){
+    -free(X,Y,_);
+   // .print(X,",",Y,",",Z);
+  }
+  if(Z == contar & free(X,Y,_)){
+    ?cont(AUX);
+    -+cont(AUX+1);
+  }
+  !columnaSuperior(X,Y-1,Z).
++!columnaSuperior(X,Y,Z).
 
-+!columnaInferior(X,Y) : size(N) & not block(X,Y) & Y<N <-
-  .print(X,",",Y);
-  -free(X,Y,_);
-  !columnaSuperior(X,Y+1).
-+!columnaInferior(X,Y).
++!columnaInferior(X,Y,Z) : size(N) & not block(X,Y) & Y<N <-
+  if(Z == ocupar){
+    -free(X,Y,_);
+   // .print(X,",",Y,",",Z);
+  }
+  if(Z == contar & free(X,Y,_)){
+    ?cont(AUX);
+    -+cont(AUX+1);
+  }
+  !columnaInferior(X,Y+1,Z).
++!columnaInferior(X,Y,Z).
 
 //Diagonales
-+!diagonalSI(X,Y) : size(N) & not block(X,Y) & Y>=0 & X>=0 <-
-  .print(X,",",Y);
-  -free(X,Y,_);
-  !diagonalSI(X-1,Y-1).
-+!diagonalSI(X,Y).
++!diagonalSI(X,Y,Z) : size(N) & not block(X,Y) & Y>=0 & X>=0 <-
+  if(Z == ocupar){
+    -free(X,Y,_);
+  //  .print(X,",",Y);
+  }
+  if(Z == contar & free(X,Y,_)){
+    ?cont(AUX);
+    -+cont(AUX+1);
+  }
+  !diagonalSI(X-1,Y-1,Z).
++!diagonalSI(X,Y,Z).
 
-+!diagonalSD(X,Y) : size(N) & not block(X,Y) & Y>=0 & X<N <-
-  .print(X,",",Y);
-  -free(X,Y,_);
-  !diagonalSD(X+1,Y-1).
-+!diagonalSD(X,Y).
++!diagonalSD(X,Y,Z) : size(N) & not block(X,Y) & Y>=0 & X<N <-
+  if(Z == ocupar){
+    -free(X,Y,_);
+   // .print(X,",",Y);
+  }
+  if(Z == contar & free(X,Y,_)){
+    ?cont(AUX);
+    -+cont(AUX+1);
+  }
+  !diagonalSD(X+1,Y-1,Z).
++!diagonalSD(X,Y,Z).
 
-+!diagonalII(X,Y) : size(N) & not block(X,Y) & Y<N & X>=0 <-
-  .print(X,",",Y);
-  -free(X,Y,_);
-  !diagonalII(X-1,Y+1).
-+!diagonalII(X,Y).
++!diagonalII(X,Y,Z) : size(N) & not block(X,Y) & Y<N & X>=0 <-
+  if(Z == ocupar){
+    -free(X,Y,_);
+   // .print(X,",",Y);
+  }
+  if(Z == contar & free(X,Y,_)){
+    ?cont(AUX);
+    -+cont(AUX+1);
+  }
+  !diagonalII(X-1,Y+1,Z).
++!diagonalII(X,Y,Z).
 
-+!diagonalID(X,Y) : size(N) & not block(X,Y) & Y<N & X<N <-
-  .print(X,",",Y);
-  -free(X,Y,_);
-  !diagonalID(X+1,Y+1).
-+!diagonalID(X,Y).
++!diagonalID(X,Y,Z) : size(N) & not block(X,Y) & Y<N & X<N <-
+  if(Z == ocupar){
+    -free(X,Y,_);
+   // .print(X,",",Y);
+  }
+  if(Z == contar & free(X,Y,_)){
+    ?cont(AUX);
+    -+cont(AUX+1);
+  }
+  !diagonalID(X+1,Y+1,Z).
++!diagonalID(X,Y,Z).
 
 
 /* ----- Actualiza el contador de casillas libres amenazadas ----- */
@@ -151,53 +198,48 @@ diagonal(X1,Y1) :-
   +cont(0);
 	for(free(X,Y,AM)){
     -+cont(0);
+   // .print("ANALIZANDO ", X,",",Y);
+    //Filas
+    !filaDerecha(X+1,Y,contar);
+    !filaIzquierda(X-1,Y,contar);
 
-    // Número de casillas amenazadas en filas y columnas
-    .findall(pos(_,X,Y),
-            //Condiciones
-            free(X,_,_) |
-            free(_,Y,_) ,
-            //Salida
-            FilaColumna);
+    //Columnas
+    !columnaSuperior(X,Y-1,contar);
+    !columnaInferior(X,Y+1,contar);
 
-    // Número de casillas amenazadas en diagonales
-    for(.range(I,0,N-1)){
-			for(.range(J,0,N-1)){
-        if(free(I,J,_)&((X-I == Y-J)|(I-X == Y-J))){
-          ?cont(AUX);
-          -+cont(AUX+1);
-				}
-      }
-    }
+    //Diagonales
+    !diagonalSI(X-1,Y-1,contar);
+    !diagonalSD(X+1,Y-1,contar);
+    !diagonalII(X-1,Y+1,contar);
+    !diagonalID(X+1,Y+1,contar);
 
-    .length(FilaColumna,FC);
-    ?cont(Diagonales);
-
+    ?cont(Amenazadas);
 		-free(X,Y,AM);
     //La casilla X,Y se cuenta como amenazada tanto en filas como columnas como diagonales (-2)
-		+free(X,Y,FC+Diagonales-2);
+		+free(X,Y,Amenazadas);
+   // .print(X,",",Y,",",Amenazadas);
 	}
   .abolish(cont(_)).
 -!amenazadas<-.print("ERROR AMENAZADAS").
 
 
-+player(N) : playAs(N) <- .wait(300);.// !play.
++player(N) : playAs(N) <- .wait(300); !play.
 
 +player(N) : playAs(M) & not N==M <- .wait(300); .print("No es mi turno.").
 
 /* ----- Turno Blancas ----- */
-/*
+
 +player(0):playAs(0) <-
 	-player(0)[source(percept)];
 	!play.
-*/
+
 
 /* ----- Turno Negras ----- */
-/*
+
 +player(1):playAs(1) <-
 	-player(1)[source(percept)];
 	!play.
-*/
+
 /* ----- Jugar ----- */
 +!play <-
 	!select(Max);

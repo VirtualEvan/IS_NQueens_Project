@@ -25,7 +25,7 @@ diagonal(X1,Y1) :-
 !start.
 
 /* Plans */
-+!start :playAs(0) <-
++!start :playAs(0) <- .wait(300);
   !ocupar;
   !amenazadas;
   !play.
