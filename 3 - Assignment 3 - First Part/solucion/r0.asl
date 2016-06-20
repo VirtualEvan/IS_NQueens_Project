@@ -15,7 +15,9 @@ vertical(X,Y) :-
   queen(_,Y).
 
 diagonal(X1,Y1) :-
-  queen(X2,Y2) & ((X1-X2 == Y1-Y2) | (X2-X1 == Y1-Y2)) & ((X1-X3 == Y1-Y3) | (X3-X1 == Y1-Y3)).
+  queen(X2,Y2) &
+  ((X1-X2 == Y1-Y2) | (X2-X1 == Y1-Y2)) &
+  ((X1-X3 == Y1-Y3) | (X3-X1 == Y1-Y3)).
 
 
 
@@ -43,8 +45,6 @@ diagonal(X1,Y1) :-
 +queen(X,Y) [source(percept)] : playAs(N) <-
 	.print("Actualizando base de conocimientos");
 	!ocupar(X,Y);
- // .findall(pos(PosX,PosY),free(PosX,PosY,_),Lista);
- // .print(Lista);
 	!amenazadas;
   .
 
@@ -71,7 +71,6 @@ diagonal(X1,Y1) :-
 +!filaDerecha(X,Y,Z) : size(N) & X<N <-
   if(Z == ocupar){
     -free(X,Y,_);
-   // .print(X,",",Y);
   }
   if(Z == contar & free(X,Y,_)){
     ?cont(AUX);
@@ -83,7 +82,6 @@ diagonal(X1,Y1) :-
 +!filaIzquierda(X,Y,Z) : size(N) & X>=0 <-
   if(Z == ocupar){
     -free(X,Y,_);
-   // .print(X,",",Y);
   }
   if(Z == contar & free(X,Y,_)){
     ?cont(AUX);
@@ -96,7 +94,6 @@ diagonal(X1,Y1) :-
 +!columnaSuperior(X,Y,Z) : size(N) & Y>=0 <-
   if(Z == ocupar){
     -free(X,Y,_);
-   // .print(X,",",Y,",",Z);
   }
   if(Z == contar & free(X,Y,_)){
     ?cont(AUX);
@@ -108,7 +105,6 @@ diagonal(X1,Y1) :-
 +!columnaInferior(X,Y,Z) : size(N) & Y<N <-
   if(Z == ocupar){
     -free(X,Y,_);
-   // .print(X,",",Y,",",Z);
   }
   if(Z == contar & free(X,Y,_)){
     ?cont(AUX);
@@ -121,7 +117,6 @@ diagonal(X1,Y1) :-
 +!diagonalSI(X,Y,Z) : size(N) & Y>=0 & X>=0 <-
   if(Z == ocupar){
     -free(X,Y,_);
-  //  .print(X,",",Y);
   }
   if(Z == contar & free(X,Y,_)){
     ?cont(AUX);
@@ -133,7 +128,6 @@ diagonal(X1,Y1) :-
 +!diagonalSD(X,Y,Z) : size(N) & Y>=0 & X<N <-
   if(Z == ocupar){
     -free(X,Y,_);
-   // .print(X,",",Y);
   }
   if(Z == contar & free(X,Y,_)){
     ?cont(AUX);
@@ -145,7 +139,6 @@ diagonal(X1,Y1) :-
 +!diagonalII(X,Y,Z) : size(N) & Y<N & X>=0 <-
   if(Z == ocupar){
     -free(X,Y,_);
-   // .print(X,",",Y);
   }
   if(Z == contar & free(X,Y,_)){
     ?cont(AUX);
@@ -157,7 +150,6 @@ diagonal(X1,Y1) :-
 +!diagonalID(X,Y,Z) : size(N) & Y<N & X<N <-
   if(Z == ocupar){
     -free(X,Y,_);
-   // .print(X,",",Y);
   }
   if(Z == contar & free(X,Y,_)){
     ?cont(AUX);
@@ -173,7 +165,6 @@ diagonal(X1,Y1) :-
   +cont(0);
 	for(free(X,Y,AM)){
     -+cont(0);
-   // .print("ANALIZANDO ", X,",",Y);
     //Filas
     !filaDerecha(X+1,Y,contar);
     !filaIzquierda(X-1,Y,contar);
@@ -192,7 +183,6 @@ diagonal(X1,Y1) :-
 		-free(X,Y,AM);
     //La casilla X,Y se cuenta como amenazada tanto en filas como columnas como diagonales (-2)
 		+free(X,Y,Amenazadas);
-   // .print(X,",",Y,",",Amenazadas);
 	}
   .abolish(cont(_)).
 -!amenazadas<-.print("ERROR AMENAZADAS").
@@ -229,7 +219,6 @@ diagonal(X1,Y1) :-
 /* ----- Seleccionar la Posición con mayor número de amenazadas ----- */
 +!select(Max) <-
 	.wait(700);
-  //NumAmenazadas,X,Y
   .findall(pos(N,X,Y),free(X,Y,N),ListaPosiciones);
   .print("Posiciones posibles: ",ListaPosiciones);
   .max(ListaPosiciones,Max).
