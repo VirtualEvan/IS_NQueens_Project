@@ -14,6 +14,5 @@ MAS mars {
         //black /Users/mcduran67/Desktop/Queens/r0.asl [beliefs="playAs(1)"];
         black r0.asl [beliefs="playAs(1)"];
 
-        //blocker r0.asl;
-
+        blocker r0.asl;
 }

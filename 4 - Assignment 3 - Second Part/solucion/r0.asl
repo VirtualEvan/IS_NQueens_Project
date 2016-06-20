@@ -35,11 +35,25 @@ diagonal(X1,Y1) :-
 !start.
 
 /* Plans */
-+!start :playAs(0) <- .wait(300);
++!start : playAs(0) <-
+  .wait(500);
+  ?size(N);
+  +blockNum(N/4);
   !amenazadas;
-  !play.
+  !play
+  .
 
-+!start :playAs(1) <- true.
++!start : playAs(1) <-
+  ?size(N);
+  +blockNum(N/4);
+  .
+
++!start : not playAs(_) <-
+  .wait(500);
+  !amenazadas;
+  ?size(N);
+  +blockNum(N/4);
+  !putBlock.
 
 +size(N)<- !crearTablero(N).
 
@@ -51,31 +65,37 @@ diagonal(X1,Y1) :-
 		}
 	}.
 
-+queen(X,Y) [source(percept)] : playAs(N) <-
++queen(X,Y) [source(percept)]  <-
 	.print("Actualizando base de conocimientos");
 	!ocupar(X,Y);
  // .findall(pos(PosX,PosY),free(PosX,PosY,_),Lista);
  // .print(Lista);
+  .wait({+!ocupar(X,Y)});
 	!amenazadas;
+  .wait({+!amenazadas});
   .
 
-+block(X,Y) [source(percept)] : playAs(N) <-
++block(X,Y) <-
   -free(X,Y,_);
 	.print("Actualizando base de conocimientos");
   ?size(Size);
   for(.range(V,0,Size-1)){
     for(.range(W,0,Size-1)){
       if(not check(V,W) & not free(V,W,_)){
-        +free(V,W,111);
+        +free(V,W,0);
+        .print("Pos liberada",V,",",W);
       }
     }
   }
-  .findall(pos(PosX,PosY),free(PosX,PosY,111),Lista);
-  .print(Lista).
+  !amenazadas;
+  .wait({+!amenazadas});
+  .findall(pos(PosX,PosY),free(PosX,PosY,_),Lista);
+  .print(Lista)
+ .
 
 /* ----- Elimina casillas que no son libres ----- */
 +!ocupar(X,Y) <-
-  .print(X,",",Y);
+  .print("Reina: ",X,",",Y);
 	-free(X,Y,_);
   //Filas
   !filaDerecha(X+1,Y,ocupar);
@@ -96,11 +116,11 @@ diagonal(X1,Y1) :-
 +!filaDerecha(X,Y,Z) : size(N) & not block(X,Y) & X<N <-
   if(Z == ocupar){
     -free(X,Y,_);
-   // .print(X,",",Y);
   }
   if(Z == contar & free(X,Y,_)){
     ?cont(AUX);
     -+cont(AUX+1);
+   // .print(X,",",Y);
   }
   !filaDerecha(X+1,Y,Z).
 +!filaDerecha(X,Y,Z).
@@ -108,11 +128,11 @@ diagonal(X1,Y1) :-
 +!filaIzquierda(X,Y,Z) : size(N) & not block(X,Y) & X>=0 <-
   if(Z == ocupar){
     -free(X,Y,_);
-   // .print(X,",",Y);
   }
   if(Z == contar & free(X,Y,_)){
     ?cont(AUX);
     -+cont(AUX+1);
+   // .print(X,",",Y);
   }
   !filaIzquierda(X-1,Y,Z).
 +!filaIzquierda(X,Y,Z).
@@ -121,11 +141,11 @@ diagonal(X1,Y1) :-
 +!columnaSuperior(X,Y,Z) : size(N) & not block(X,Y) & Y>=0 <-
   if(Z == ocupar){
     -free(X,Y,_);
-   // .print(X,",",Y,",",Z);
   }
   if(Z == contar & free(X,Y,_)){
     ?cont(AUX);
     -+cont(AUX+1);
+   // .print(X,",",Y,",",Z);
   }
   !columnaSuperior(X,Y-1,Z).
 +!columnaSuperior(X,Y,Z).
@@ -133,11 +153,11 @@ diagonal(X1,Y1) :-
 +!columnaInferior(X,Y,Z) : size(N) & not block(X,Y) & Y<N <-
   if(Z == ocupar){
     -free(X,Y,_);
-   // .print(X,",",Y,",",Z);
   }
   if(Z == contar & free(X,Y,_)){
     ?cont(AUX);
     -+cont(AUX+1);
+   // .print(X,",",Y,",",Z);
   }
   !columnaInferior(X,Y+1,Z).
 +!columnaInferior(X,Y,Z).
@@ -146,11 +166,11 @@ diagonal(X1,Y1) :-
 +!diagonalSI(X,Y,Z) : size(N) & not block(X,Y) & Y>=0 & X>=0 <-
   if(Z == ocupar){
     -free(X,Y,_);
-  //  .print(X,",",Y);
   }
   if(Z == contar & free(X,Y,_)){
     ?cont(AUX);
     -+cont(AUX+1);
+   // .print(X,",",Y);
   }
   !diagonalSI(X-1,Y-1,Z).
 +!diagonalSI(X,Y,Z).
@@ -158,11 +178,11 @@ diagonal(X1,Y1) :-
 +!diagonalSD(X,Y,Z) : size(N) & not block(X,Y) & Y>=0 & X<N <-
   if(Z == ocupar){
     -free(X,Y,_);
-   // .print(X,",",Y);
   }
   if(Z == contar & free(X,Y,_)){
     ?cont(AUX);
     -+cont(AUX+1);
+   // .print(X,",",Y);
   }
   !diagonalSD(X+1,Y-1,Z).
 +!diagonalSD(X,Y,Z).
@@ -170,11 +190,11 @@ diagonal(X1,Y1) :-
 +!diagonalII(X,Y,Z) : size(N) & not block(X,Y) & Y<N & X>=0 <-
   if(Z == ocupar){
     -free(X,Y,_);
-   // .print(X,",",Y);
   }
   if(Z == contar & free(X,Y,_)){
     ?cont(AUX);
     -+cont(AUX+1);
+   // .print(X,",",Y);
   }
   !diagonalII(X-1,Y+1,Z).
 +!diagonalII(X,Y,Z).
@@ -182,11 +202,11 @@ diagonal(X1,Y1) :-
 +!diagonalID(X,Y,Z) : size(N) & not block(X,Y) & Y<N & X<N <-
   if(Z == ocupar){
     -free(X,Y,_);
-   // .print(X,",",Y);
   }
   if(Z == contar & free(X,Y,_)){
     ?cont(AUX);
     -+cont(AUX+1);
+   // .print(X,",",Y);
   }
   !diagonalID(X+1,Y+1,Z).
 +!diagonalID(X,Y,Z).
@@ -222,27 +242,22 @@ diagonal(X1,Y1) :-
   .abolish(cont(_)).
 -!amenazadas<-.print("ERROR AMENAZADAS").
 
+/* ----- Turnos ----- */
 
-+player(N) : playAs(N) <- .wait(300); !play.
++player(N) : playAs(N) <- .wait(500); !play.
 
-+player(N) : playAs(M) & not N==M <- .wait(300); .print("No es mi turno.").
++player(N) : playAs(M) & not N==M /*& M\==blocker*/ <- .wait(300); .print("No es mi turno.").
 
-/* ----- Turno Blancas ----- */
-
-+player(0):playAs(0) <-
-	-player(0)[source(percept)];
-	!play.
-
-
-/* ----- Turno Negras ----- */
-
-+player(1):playAs(1) <-
-	-player(1)[source(percept)];
-	!play.
 
 /* ----- Jugar ----- */
-+!play <-
-	!select(Max);
++!play : blockNum(B) <-
+  if (B > 0){
+    .wait({+block(_,_)},1000,EventTime);
+    -+blockNum(B-1);
+  } else {
+    .wait(500);
+  }
+  !select(Max);
   .print("Maximo: ", Max);
   !getPosition(Max, X,Y);
   queen(X,Y).
@@ -259,3 +274,20 @@ diagonal(X1,Y1) :-
   .print("Posiciones posibles: ",ListaPosiciones);
   .max(ListaPosiciones,Max).
 -!select(Max) <- Max = [].
+
+/* ----- Colocar bloque ----- */
++!putBlock : blockNum(B) & B>0 <-
+ // .print("BOQUESSSSSSSSSSSSSSSSSSS: ",B);
+ // .random(R);
+  .wait({+queen(_,_)});
+  !select(Max);
+  .print("Maximo: ", Max);
+  !getPosition(Max, X,Y);
+  if(not queen(X,Y)){
+    block(X,Y);
+    -+blockNum(B-1);
+  }
+  !putBlock;
+  .
+-!putBlock <- .print("ERROR PUTBLOCK").
++!putBlock.
