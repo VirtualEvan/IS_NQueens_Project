@@ -1,36 +1,4 @@
-// Agent r3 in project mars.mas2j
-
-/* Initial beliefs and rules */
-/*
-check(X,Y) :-
-  horizontal(X,Y) |
-  vertical(X,Y) |
-  diagonal(X,Y).
-
-
-horizontal(X,Y) :-
-  (queen(X,_) & not block(X,_)) |
-  (queen(X,YQ) & block(X,YB) & not (((Y < YB) & (YB < YQ)) | ((Y > YB) & (YB > YQ)))).
-
-vertical(X,Y) :-
-  (queen(_,Y) & not block(_,Y)) |
-  (queen(XQ,Y) & block(XB,Y) & not (((X < XB) & (XB < XQ)) | ((X > XB) & (XB > XQ)))).
-
-diagonal(X,Y):-queen(X,Y).
-diagonal(X1,Y1) :-
-  block(X1,Y1) |
-  size(N) &
-  ( queen(X2,Y2) & ((X1-X2 == Y1-Y2) | (X2-X1 == Y1-Y2)) & not (block(X3,Y3) & ((X1-X3 == Y1-Y3) | (X3-X1 == Y1-Y3))) ) |
-  ( queen(X2,Y2) & (X1-X2 == Y1-Y2) & block(X3,Y3) & (X1-X3 == Y1-Y3) & ((Y3<Y2 & Y2<Y1 & X3<X2 & X2<X1) | //DiagonalSI (Block-Queen-Space)
-                                                                         (Y3>Y2 & Y2>Y1 & X3>X2 & X2>X1) | //DiagonalID (Block-Queen-Space)
-                                                                         (Y3<Y1 & Y1<Y2 & X3<X1 & X1<X2) | //DiagonalSI (Block-Space-Queen)
-                                                                         (Y3>Y1 & Y1>Y2 & X3>X1 & X1>X2)) ) | //DiagonalID (Block-Space-Queen)
-  ( queen(X2,Y2) & (X2-X1 == Y1-Y2) & block(X3,Y3) & (X3-X1 == Y1-Y3) & ((Y3<Y2 & Y2<Y1 & X3>X2 & X2>X1) | //DiagonalSD (Block-Queen-Space)
-                                                                         (Y3>Y2 & Y2>Y1 & X3<X2 & X2<X1) | //DiagonalII (Block-Queen-Space)
-                                                                         (Y3<Y1 & Y1<Y2 & X3>X1 & X1>X2) | //DiagonalII (Block-Space-Queen)
-                                                                         (Y3>Y1 & Y1>Y2 & X3<X1 & X1<X2)) ). //DiagonalII (Block-Space-Queen)
-*/
-
+// Agent r0 in project mars.mas2j
 
 /* Initial goals */
 
@@ -56,6 +24,7 @@ diagonal(X1,Y1) :-
   +configMovs(N/4);
   !crearTablero(N).
 
+
 /* ----- Crea un tablero de casillas libres con el numero de casillas que amenaza cada una ----- */
 +!crearTablero(N) <-
 	for(.range(X,0,N-1)){
@@ -70,9 +39,10 @@ diagonal(X1,Y1) :-
   .wait(1000);
 	!amenazadas;
   .wait(1000);
- // .findall(pos(PosX,PosY,R),free(PosX,PosY,R),Lista);
- // .print("OLA K ASE ",Lista);
+  //.findall(pos(PosX,PosY,R),free(PosX,PosY,R),Lista);
+  //.print("OLA K ASE ",Lista);
   .
+
 
 /* ----- Comprueba que la casilla esté amenazada ----- */
 +!check(X,Y,Check) <-
@@ -118,6 +88,7 @@ diagonal(X1,Y1) :-
   !diagonalII(X-1,Y+1,ocupar);
   !diagonalID(X+1,Y+1,ocupar).
 -!ocupar(X,Y).
+
 
 /* ----- Actualiza el contador de casillas libres que amenaza cada casilla ----- */
 +!amenazadas <-
@@ -275,7 +246,7 @@ diagonal(X1,Y1) :-
 
 /* ----- Turnos ----- */
 
-+player(N) : playAs(N) <- .wait(500); !play.
++player(N) : playAs(N) <- !play.
 
 +player(N) : playAs(M) & not N==M /*& M\==config*/ <- .wait(300); .print("No es mi turno.").
 
@@ -283,19 +254,21 @@ diagonal(X1,Y1) :-
 /* ----- Jugar ----- */
 +!play : configMovs(M) & playAs(P) <-
   if (M > 0){
-
-    .print("El configurador dispone de ", M, " movimientos");
+    .print("Movimientos restantes del configurador: ", M);
     .wait({+block(_,_)},4900,EventTime);
     !select(Max1,Max2);
     .print("Maximo: ", Max1);
     !getPosition(Max1, X1,Y1);
     !getPosition(Max2, X2,Y2);
     queen(X1,Y1);
-    if( .random(N) & N > 0.5){
+    //El jugador solicita un bloque o un agujero en la segunda posición que amenaza más casillas
+    if( .random(N) & N > 0.9){
       .print("El jugador ", P ," solicita un bloque en ", Max2);
+      .wait(3000);
       .send(configurer, tell, block(X2,Y2));
     } else {
       .print("El jugador ", P ," solicita un agujero en ", Max2);
+      .wait(3000);
       .send(configurer, tell, hole(X2,Y2));
     }
   } else {
@@ -308,7 +281,7 @@ diagonal(X1,Y1) :-
 
   }
   .
--!play <-.print("Juego Finalizado").
+-!play <- .print("Juego Finalizado").
 
 +!getPosition(pos(N,X,Y),X,Y).
 
@@ -322,7 +295,7 @@ diagonal(X1,Y1) :-
   .max(ListaPosiciones,Max).
 -!select(Max) <- Max = [].
 
-/* ----- Seleccionar las dosi posiciones con mayor número de amenazadas ----- */
+/* ----- Seleccionar las dos posiciones con mayor número de amenazadas ----- */
 +!select(Max1,Max2) <-
 	.wait(700);
   //NumAmenazadas,X,Y
@@ -330,7 +303,7 @@ diagonal(X1,Y1) :-
   .print("Posiciones posibles: ",ListaPosiciones);
   .max(ListaPosiciones,Max1);
   .delete(Max1,ListaPosiciones,NuevaLista);
-  .max(NuevaLista,Max2).
+  .nth(.length(NuevaLista)/5,NuevaLista,Max2).
 -!select(Max1,Max2) <- Max1 = [];Max2 = [].
 
 
@@ -339,20 +312,21 @@ diagonal(X1,Y1) :-
 /* ----- Turno del configurador ----- */
 +!playConfig: configMovs(M) & N > 0 <-
   !amenazadas;
- // .wait({+!amenazadas});
- // .print("HA LLEGADO AL playConfig!!!!!!!!!!!!!!!!!!!");
- // .send(Ag, tell, accept),, Ag = {white, black}
+  .wait(1000);
   !putBlock
   .
 
 /* ----- Colocar bloque ----- */
 +!putBlock : configMovs(M) & M>0 <-
   .findall(pos(X,Y,Ag), (accepted(block(X,Y,Ag)) | accepted(hole(X,Y,Ag))), Accepted);
+  // El configurador escoge cuál de las dos propuestas amenaza más casillas para el momento actual
+  // (Impide que se realice una jugada que amenace dicho número de casillas)
   if( .length(Accepted)=2 ){
     .print("Posiciones aceptadas ", Accepted);
     .nth(0,Accepted,pos(I,J,A1));
     .nth(1,Accepted,pos(O,K,A2));
-    if(free(I,J,_)>free(O,K,_)){
+    //Si las dos posiciones seleccionadas están libres selecciona la que más casillas amenace
+    if(free(I,J,Amenaz1) & free(O,K,Amenaz2) & Amenaz1>Amenaz2){
       if (accepted(block(I,J,_))){
         block(I,J);
         .print("Bloque colocado en la posición sugerida por el jugador ", A1);
@@ -362,20 +336,45 @@ diagonal(X1,Y1) :-
       }
     }
     else {
-      if(free(I,J,_)<free(O,K,_)){
+      if(free(I,J,Amenaz1) & free(O,K,Amenaz2) & Amenaz1<Amenaz2){
         if (accepted(block(O,K,_))){
-          block(I,J);
-          .print("Bloque colocado en la posición sugerida por el jugador ", A1);
+          block(O,K);
+          .print("Bloque colocado en la posición sugerida por el jugador ", A2);
         } else {
-          hole(I,J);
-          .print("Agujero colocado en la posición sugerida por el jugador ", A1);
+          hole(O,K);
+          .print("Agujero colocado en la posición sugerida por el jugador ", A2);
+        }
+      } else {
+        //Si una de las casillas seleccionas está amenazada y la otra no, selecciona la que no está amenazada
+        if(free(I,J,_) & not free(O,K,_)){
+          if (accepted(block(I,J,_))){
+            block(I,J);
+            .print("Bloque colocado en la posición sugerida por el jugador ", A1);
+          } else {
+            hole(I,J);
+            .print("Agujero colocado en la posición sugerida por el jugador ", A1);
+          }
+        }
+        else {
+          if(not free(I,J,_) & free(O,K,_)){
+            if (accepted(block(I,J,_))){
+              block(O,K);
+              .print("Bloque colocado en la posición sugerida por el jugador ", A2);
+            } else {
+              hole(O,K);
+              .print("Agujero colocado en la posición sugerida por el jugador ", A2);
+            }
+          }
+          //Si ambas casillas seleccionadas están amenazadas coloca un bloque en una casilla libre
+          else {
+            ?free(P,L,_);
+            block(P,L);
+            .print("Posiciones ganadoras igualadas. Bloque colocado en la primer posición libre");
+          }
         }
       }
-      else {
-        ?free(P,L,_);
-        block(P,L,_);
-        .print("Bloque colocado en la primer posición libre");
-      }
+
+
     }
     .abolish(accepted(_));
   }
@@ -384,12 +383,6 @@ diagonal(X1,Y1) :-
 -!putBlock <- .print("ERROR PUTBLOCK").
 +!putBlock <- .print("El configurador no dispone de más movimientos").
 
-/* ----- Acepta la petición ----- */ ///////////////////////////////////////////////////////////////////
-/*+!accept(Player) : accepted(block(X,Y)) <-
-	.send(Player,tell,accept).
-
-+!accept(Player) <-
-	.print("Acepto en cualquier caso.").*/
 
 /* ------ BLOQUES ------ */
 +block(X,Y) [source(percept)] : configMovs(M) <-
@@ -401,9 +394,9 @@ diagonal(X1,Y1) :-
     for(.range(W,0,Size-1)){
       if(not free(V,W,_) & not block(V,W) & not hole(V,W)){
         !check(V,W,Check);
-        if(Check\==true){
+        if(Check\==true & not hole(V,W)){
           +free(V,W,0);
-         // .print("Pos liberada",V,",",W);
+          .print("Pos liberada",V,",",W);
         }
       }
     }
@@ -413,11 +406,12 @@ diagonal(X1,Y1) :-
   .
 
 +block(X,Y) [source(Ag)] : not Ag == percept & accepted(block(_,_,Ag)) <-
-	.print("Ya se ha aceptado una petición de este agente");
+  -block(X,Y) [source(Ag)];
+  .print("Ya se ha aceptado una petición de este agente");
 	.send(Ag,tell,decline).
 
 +block(X,Y) [source(Ag)] : not Ag == percept & not accepted(block(_,_,Ag)) <-
-  -block(X,Y);
+  -block(X,Y) [source(Ag)];
 	.findall(pos(I,J), free(I,J,_), ListaLibres);
 	.length(ListaLibres, Num);
 	if (Num > 1 & not queen(X,Y) & not hole(X,Y)) {
@@ -425,38 +419,26 @@ diagonal(X1,Y1) :-
 		.send(Ag,tell,accept);
     .print("Aceptado bloque del jugador ", Ag);
 	} else {
-			.send(Ag,tell,decline)
+		.send(Ag,tell,decline)
 	}.
+
 
 /* ------ AGUJEROS ------ */
 +hole(X,Y) [source(percept)] : configMovs(M) <-
   -free(X,Y,_);
   -+configMovs(M-1);
 	.print("Actualizando base de conocimientos");
-  ?size(Size);
-  for(.range(V,0,Size-1)){
-    for(.range(W,0,Size-1)){
-      if(not free(V,W,_) & not block(V,W) & not hole(V,W)){
-        !check(V,W,Check);
-        if(Check\==true){
-          +free(V,W,0);
-          .print("Pos liberada",V,",",W);
-        }
-      }
-    }
-  }
   !amenazadas;
-  .wait({+!amenazadas});
-  .findall(pos(PosX,PosY),free(PosX,PosY,_),Lista);
-  .print(Lista)
- .
+  .wait(1000);
+  .
 
 +hole(X,Y) [source(Ag)] : not Ag == percept & accepted(hole(_,_,Ag)) <-
+  -hole(X,Y) [source(Ag)];
 	.print("Ya se ha aceptado una petición de este agente");
 	.send(Ag,tell,decline).
 
 +hole(X,Y) [source(Ag)] : not Ag == percept & not accepted(hole(_,_,Ag)) <-
-  -hole(X,Y);
+  -hole(X,Y) [source(Ag)];
 	.findall(pos(I,J), free(I,J,_), ListaLibres);
 	.length(ListaLibres, Num);
 	if (Num > 1 & not queen(X,Y) & not block(X,Y)) {
