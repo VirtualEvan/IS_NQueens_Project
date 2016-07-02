@@ -38,24 +38,21 @@ diagonal(X1,Y1) :-
 +!start : playAs(0) <-
   .wait(500);
   ?size(N);
-  +blockNum(N/4);
   !amenazadas;
   !play
   .
 
-+!start : playAs(1) <-
-  ?size(N);
-  +blockNum(N/4);
-  .
++!start : playAs(1).
+
 
 +!start : not playAs(_) <-
   .wait(500);
   !amenazadas;
-  ?size(N);
-  +blockNum(N/4);
   !putBlock.
 
-+size(N)<- !crearTablero(N).
++size(N)<-
+  +blockNum(N/4);
+  !crearTablero(N).
 
 /* ----- Crea un tablero de casillas libres con el numero de casillas que amenaza cada una ----- */
 +!crearTablero(N) <-
