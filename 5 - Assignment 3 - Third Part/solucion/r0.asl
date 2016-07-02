@@ -67,11 +67,11 @@ diagonal(X1,Y1) :-
 +queen(X,Y) [source(percept)]  <-
 	.print("Actualizando base de conocimientos");
 	!ocupar(X,Y);
- // .findall(pos(PosX,PosY),free(PosX,PosY,_),Lista);
- // .print(Lista);
-  .wait({+!ocupar(X,Y)});
+  .wait(1000);
 	!amenazadas;
-  .wait({+!amenazadas});
+  .wait(1000);
+ // .findall(pos(PosX,PosY,R),free(PosX,PosY,R),Lista);
+ // .print("OLA K ASE ",Lista);
   .
 
 /* ----- Comprueba que la casilla esté amenazada ----- */
@@ -118,6 +118,36 @@ diagonal(X1,Y1) :-
   !diagonalII(X-1,Y+1,ocupar);
   !diagonalID(X+1,Y+1,ocupar).
 -!ocupar(X,Y).
+
+/* ----- Actualiza el contador de casillas libres que amenaza cada casilla ----- */
++!amenazadas <-
+	?size(N);
+  +cont(0);
+	for(free(X,Y,AM)){
+    -+cont(0);
+   // .print("ANALIZANDO ", X,",",Y);
+    //Filas
+    !filaDerecha(X+1,Y,contar);
+    !filaIzquierda(X-1,Y,contar);
+
+    //Columnas
+    !columnaSuperior(X,Y-1,contar);
+    !columnaInferior(X,Y+1,contar);
+
+    //Diagonales
+    !diagonalSI(X-1,Y-1,contar);
+    !diagonalSD(X+1,Y-1,contar);
+    !diagonalII(X-1,Y+1,contar);
+    !diagonalID(X+1,Y+1,contar);
+
+    ?cont(Amenazadas);
+		-free(X,Y,AM);
+    //La casilla X,Y se cuenta como amenazada tanto en filas como columnas como diagonales (-2)
+		+free(X,Y,Amenazadas);
+   // .print(X,",",Y,",",Amenazadas);
+	}
+  .abolish(cont(_)).
+-!amenazadas<-.print("ERROR AMENAZADAS").
 
 //Filas
 +!filaDerecha(X,Y,Z) : size(N) & not block(X,Y) & X<N <-
@@ -243,36 +273,6 @@ diagonal(X1,Y1) :-
 +!diagonalID(X,Y,Z).
 
 
-/* ----- Actualiza el contador de casillas libres amenazadas ----- */
-+!amenazadas <-
-	?size(N);
-  +cont(0);
-	for(free(X,Y,AM)){
-    -+cont(0);
-   // .print("ANALIZANDO ", X,",",Y);
-    //Filas
-    !filaDerecha(X+1,Y,contar);
-    !filaIzquierda(X-1,Y,contar);
-
-    //Columnas
-    !columnaSuperior(X,Y-1,contar);
-    !columnaInferior(X,Y+1,contar);
-
-    //Diagonales
-    !diagonalSI(X-1,Y-1,contar);
-    !diagonalSD(X+1,Y-1,contar);
-    !diagonalII(X-1,Y+1,contar);
-    !diagonalID(X+1,Y+1,contar);
-
-    ?cont(Amenazadas);
-		-free(X,Y,AM);
-    //La casilla X,Y se cuenta como amenazada tanto en filas como columnas como diagonales (-2)
-		+free(X,Y,Amenazadas);
-   // .print(X,",",Y,",",Amenazadas);
-	}
-  .abolish(cont(_)).
--!amenazadas<-.print("ERROR AMENAZADAS").
-
 /* ----- Turnos ----- */
 
 +player(N) : playAs(N) <- .wait(500); !play.
@@ -291,9 +291,13 @@ diagonal(X1,Y1) :-
     !getPosition(Max1, X1,Y1);
     !getPosition(Max2, X2,Y2);
     queen(X1,Y1);
-    .print("El jugador ", P ," solicita un bloque en ", Max2);
-    .send(configurer, tell, block(X2,Y2));
-
+    if( .random(N) & N > 0.5){
+      .print("El jugador ", P ," solicita un bloque en ", Max2);
+      .send(configurer, tell, block(X2,Y2));
+    } else {
+      .print("El jugador ", P ," solicita un agujero en ", Max2);
+      .send(configurer, tell, hole(X2,Y2));
+    }
   } else {
     .print("El configurador ha agotado todos sus movimientos, se salta su turno");
     .wait(500);
@@ -343,21 +347,29 @@ diagonal(X1,Y1) :-
 
 /* ----- Colocar bloque ----- */
 +!putBlock : configMovs(M) & M>0 <-
-  .findall(pos(X,Y,Ag), accepted(block(X,Y,Ag)), Accepted);
-  //if(Accepted \== [])
-  //{.print(Accepted);}
+  .findall(pos(X,Y,Ag), (accepted(block(X,Y,Ag)) | accepted(hole(X,Y,Ag))), Accepted);
   if( .length(Accepted)=2 ){
     .print("Posiciones aceptadas ", Accepted);
     .nth(0,Accepted,pos(I,J,A1));
     .nth(1,Accepted,pos(O,K,A2));
-    if(free(I,J,_)<free(O,K,_)){
-      block(I,J,_);
-      .print("Bloque colocado en la posición sugerida por el jugador ", A1);
+    if(free(I,J,_)>free(O,K,_)){
+      if (accepted(block(I,J,_))){
+        block(I,J);
+        .print("Bloque colocado en la posición sugerida por el jugador ", A1);
+      } else {
+        hole(I,J);
+        .print("Agujero colocado en la posición sugerida por el jugador ", A1);
+      }
     }
     else {
-      if(free(I,J,_)>free(O,K,_)){
-        block(O,K,_);
-        .print("Bloque colocado en la posición suugerida por el jugador ", A2);
+      if(free(I,J,_)<free(O,K,_)){
+        if (accepted(block(O,K,_))){
+          block(I,J);
+          .print("Bloque colocado en la posición sugerida por el jugador ", A1);
+        } else {
+          hole(I,J);
+          .print("Agujero colocado en la posición sugerida por el jugador ", A1);
+        }
       }
       else {
         ?free(P,L,_);
@@ -391,6 +403,43 @@ diagonal(X1,Y1) :-
         !check(V,W,Check);
         if(Check\==true){
           +free(V,W,0);
+         // .print("Pos liberada",V,",",W);
+        }
+      }
+    }
+  }
+  !amenazadas;
+  .wait(1000)
+  .
+
++block(X,Y) [source(Ag)] : not Ag == percept & accepted(block(_,_,Ag)) <-
+	.print("Ya se ha aceptado una petición de este agente");
+	.send(Ag,tell,decline).
+
++block(X,Y) [source(Ag)] : not Ag == percept & not accepted(block(_,_,Ag)) <-
+  -block(X,Y);
+	.findall(pos(I,J), free(I,J,_), ListaLibres);
+	.length(ListaLibres, Num);
+	if (Num > 1 & not queen(X,Y) & not hole(X,Y)) {
+		+accepted(block(X,Y,Ag));
+		.send(Ag,tell,accept);
+    .print("Aceptado bloque del jugador ", Ag);
+	} else {
+			.send(Ag,tell,decline)
+	}.
+
+/* ------ AGUJEROS ------ */
++hole(X,Y) [source(percept)] : configMovs(M) <-
+  -free(X,Y,_);
+  -+configMovs(M-1);
+	.print("Actualizando base de conocimientos");
+  ?size(Size);
+  for(.range(V,0,Size-1)){
+    for(.range(W,0,Size-1)){
+      if(not free(V,W,_) & not block(V,W) & not hole(V,W)){
+        !check(V,W,Check);
+        if(Check\==true){
+          +free(V,W,0);
           .print("Pos liberada",V,",",W);
         }
       }
@@ -402,44 +451,18 @@ diagonal(X1,Y1) :-
   .print(Lista)
  .
 
-+block(X,Y) [source(Ag)] : not Ag == percept & accepted(block(_,_,Ag)) <-
++hole(X,Y) [source(Ag)] : not Ag == percept & accepted(hole(_,_,Ag)) <-
 	.print("Ya se ha aceptado una petición de este agente");
 	.send(Ag,tell,decline).
 
-+block(X,Y) [source(Ag)] : not Ag == percept & not accepted(block(_,_,Ag)) <-
-  -block(X,Y);
++hole(X,Y) [source(Ag)] : not Ag == percept & not accepted(hole(_,_,Ag)) <-
+  -hole(X,Y);
 	.findall(pos(I,J), free(I,J,_), ListaLibres);
-
 	.length(ListaLibres, Num);
-	if (Num > 1 & not queen(X,Y) & not hole(X,Y)) {
-		+accepted(block(X,Y,Ag));
+	if (Num > 1 & not queen(X,Y) & not block(X,Y)) {
+		+accepted(hole(X,Y,Ag));
 		.send(Ag,tell,accept);
-    .print("Aceptado bloque del jugador ", Ag);
+    .print("Aceptado agujero del jugador ", Ag);
 	} else {
 			.send(Ag,tell,decline)
 	}.
-
-/* ------ AGUJEROS ------ *//*
-+hole(X,Y) [source(percept) : configMovs(M) <-
-  -free(X,Y,_);
-  -+configMovs(M-1);
- .
-
-+hole(X,Y) [source(Ag)] : not Ag == percept & accepted(_) <-
-	.print("Lo siento ya acepte una petición anterior.");
-	.send(Ag,tell,decline).
-
-+hole(X,Y) [source(Ag)] : not Ag == percept & not accepted(_) <-
-	.findall(pos(I,J), free(I,J), ListaLibres);
-	.length(ListaLibres, Num);
-	if (Num > 1 & .member(pos(X,Y), ListaLibres)) {
-		if (not accepted(_)){
-			+accepted(hole(X,Y));
-			!accept(Ag);
-		} else {
-			.send(Ag,tell,decline)
-		}
-	} else {
-			.send(Ag,tell,decline)
-	}.
-*/
