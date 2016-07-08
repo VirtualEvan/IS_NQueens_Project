@@ -255,14 +255,14 @@
 +!play : configMovs(M) & playAs(P) <-
   if (M > 0){
     .print("Movimientos restantes del configurador: ", M);
-    .wait({+block(_,_)},4900,EventTime);
+    .wait(4900);
     !select(Max1,Max2);
     .print("Maximo: ", Max1);
     !getPosition(Max1, X1,Y1);
     !getPosition(Max2, X2,Y2);
     queen(X1,Y1);
     //El jugador solicita un bloque o un agujero en la segunda posición que amenaza más casillas
-    if( .random(N) & N > 0.9){
+    if( .random(N) & N > 0.5){
       .print("El jugador ", P ," solicita un bloque en ", Max2);
       .wait(3000);
       .send(configurer, tell, block(X2,Y2));

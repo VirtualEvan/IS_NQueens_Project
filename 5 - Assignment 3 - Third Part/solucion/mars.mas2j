@@ -8,7 +8,7 @@ MAS mars {
     environment: QueensEnv
 
     agents:
-        white r0.asl [beliefs="playAs(0)"];
+        white checker.asl [beliefs="playAs(0)"];
         black r0.asl [beliefs="playAs(1)"];
         configurer r0.asl;
 
