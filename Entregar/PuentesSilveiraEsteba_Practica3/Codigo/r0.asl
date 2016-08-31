@@ -38,9 +38,9 @@
 	!ocupar(X,Y);
  // .findall(pos(PosX,PosY),free(PosX,PosY,_),Lista);
  // .print(Lista);
-  .wait({+!ocupar(X,Y)});
+  .wait(1000);
 	!amenazadas;
-  .wait({+!amenazadas});
+  .wait(1000);
   .
 
 +block(X,Y) <-
@@ -59,7 +59,7 @@
     }
   }
   !amenazadas;
-  .wait({+!amenazadas});
+  .wait(1000);
   .findall(pos(PosX,PosY),free(PosX,PosY,_),Lista);
   .print(Lista)
  .
@@ -267,7 +267,7 @@
 
 +player(N) : playAs(N) <- .wait(500); !play.
 
-+player(N) : playAs(M) & not N==M /*& M\==blocker*/ <- .wait(300); .print("No es mi turno.").
++player(N) : playAs(M) & not N==M  <- .wait(300); .print("No es mi turno.").
 
 
 /* ----- Jugar ----- */
@@ -275,8 +275,9 @@
   if (B > 0){
     .wait({+block(_,_)},1000,EventTime);
     -+blockNum(B-1);
+    .wait(1000);
   } else {
-    .wait(500);
+    .wait(1000);
   }
   !select(Max);
   .print("Maximo: ", Max);
@@ -301,6 +302,7 @@
  // .print("BOQUESSSSSSSSSSSSSSSSSSS: ",B);
  // .random(R);
   .wait({+queen(_,_)});
+  .wait(1000);
   !select(Max);
   .print("Maximo: ", Max);
   !getPosition(Max, X,Y);

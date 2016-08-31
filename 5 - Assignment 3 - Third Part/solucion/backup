@@ -20,6 +20,7 @@
   .
 
 +size(N)<-
+  +peticiones(0);
   +configMovs(N/4);
   !crearTablero(N).
 
@@ -247,7 +248,7 @@
 
 +player(N) : playAs(N) <- !play.
 
-+player(N) : playAs(M) & not N==M <- .wait(300); .print("No es mi turno.").
++player(N) : playAs(M) & not N==M /*& M\==config*/ <- .wait(300); .print("No es mi turno.").
 
 
 /* ----- Jugar ----- */
@@ -316,7 +317,7 @@
   .
 
 /* ----- Colocar bloque ----- */
-+!putBlock : configMovs(M) & M>0 <-
++!putBlock : configMovs(M) & M>0 & peticiones(P)<-
   .findall(pos(X,Y,Ag), (accepted(block(X,Y,Ag)) | accepted(hole(X,Y,Ag))), Accepted);
   // El configurador escoge cuál de las dos propuestas amenaza más casillas para el momento actual
   // (Impide que se realice una jugada que amenace dicho número de casillas)
@@ -372,8 +373,21 @@
           }
         }
       }
+
+
     }
     .abolish(accepted(_));
+  } else {
+    if ( .length(Accepted)=1 & P=1){
+      if (accepted(block(M,N,Agente))){
+        block(M,N);
+        .print("El otro jugador no ha solicitado movimiento, bloque colocado en la posición solicitada por el jugador ", Agente);
+      } else {
+        hole(M,N);
+        .print("El otro jugador no ha solicitado movimiento, agujero colocado en la posición solicitada por el jugador ", Agente);
+      }
+      -+peticiones(0);
+    }
   }
   !putBlock;
   .
@@ -404,8 +418,18 @@
 
 +block(X,Y) [source(Ag)] : not Ag == percept & (accepted(block(_,_,Ag) | accepted(hole(_,_,Ag)))) <-
   -block(X,Y) [source(Ag)];
-  .print("Ya se ha aceptado una petición de este agente");
-	.send(Ag,tell,decline).
+  .findall(pos(I,J), free(I,J,_), ListaLibres);
+	.length(ListaLibres, Num);
+	if (Num > 1 & not queen(X,Y) & not hole(X,Y)) {
+    -accepted(block(_,_,Ag));
+		+accepted(block(X,Y,Ag));
+		.send(Ag,tell,accept);
+    ?peticiones(P);
+    -+peticiones(P+1);
+    .print("Actualizada la petición del jugador: ", Ag);
+	} else {
+		.send(Ag,tell,decline)
+	}.
 
 +block(X,Y) [source(Ag)] : not Ag == percept & (not accepted(block(_,_,Ag)) | not accepted(hole(_,_,Ag))) <-
   -block(X,Y) [source(Ag)];
@@ -431,8 +455,18 @@
 
 +hole(X,Y) [source(Ag)] : not Ag == percept & (accepted(block(_,_,Ag) | accepted(hole(_,_,Ag)))) <-
   -hole(X,Y) [source(Ag)];
-	.print("Ya se ha aceptado una petición de este agente");
-	.send(Ag,tell,decline).
+  .findall(pos(I,J), free(I,J,_), ListaLibres);
+  .length(ListaLibres, Num);
+  if (Num > 1 & not queen(X,Y) & not block(X,Y)) {
+    -accepted(hole(_,_,Ag));
+    +accepted(hole(X,Y,Ag));
+    .send(Ag,tell,accept);
+    ?peticiones(P);
+    -+peticiones(P+1);
+    .print("Actualizada la petición del jugador: ", Ag);
+  } else {
+      .send(Ag,tell,decline)
+  }.
 
 +hole(X,Y) [source(Ag)] : not Ag == percept & (not accepted(block(_,_,Ag)) | not accepted(hole(_,_,Ag))) <-
   -hole(X,Y) [source(Ag)];

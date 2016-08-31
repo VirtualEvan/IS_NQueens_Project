@@ -7,9 +7,12 @@ MAS mars {
 
     environment: QueensEnv
 
-    agents:
+    agents: //r0;//r2; r1; r0;
+        //white /Users/mcduran67/Desktop/Queens/r0.asl [beliefs="playAs(0)"];
         white r0.asl [beliefs="playAs(0)"];
-        black r0.asl [beliefs="playAs(1)"];
-        configurer r0.asl;
 
+        //black /Users/mcduran67/Desktop/Queens/r0.asl [beliefs="playAs(1)"];
+        black r0.asl [beliefs="playAs(1)"];
+
+        blocker r0.asl;
 }

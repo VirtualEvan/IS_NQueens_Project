@@ -1,0 +1,23 @@
+{
+  "name": "autocomplete-screeps",
+  "version": "0.0.1",
+  "description": "JS Autocompletions for the game Screeps",
+  "main": "./lib/main",
+  "license": "MIT",
+  "repository": "https://github.com/VirtualEvan/ScreepsAutocomplete",
+  "engines": {
+    "atom": ">=0.174.0 <2.0.0"
+  },
+  "providedServices": {
+    "autocomplete.provider": {
+      "versions": {
+        "2.0.0": "getProvider"
+      }
+    }
+  },
+  "devDependencies": {
+    "bluebird": "^2.9.25",
+    "coffeelint": "^1.9.7",
+    "request": "^2.53.0"
+  }
+}

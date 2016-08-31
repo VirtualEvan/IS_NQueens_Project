@@ -22,7 +22,7 @@ import java.util.logging.Logger;
 
 public class QueensEnv extends Environment {
 
-    public static final int GSize  =   16; // grid size
+    public static final int GSize  =   8; // grid size
     public static final int EMPTY  =   8; // empty cell code in grid model
     public static final int ATACK  =  16; // empty cell code in grid model
     public static final int HOLE   =  32; // hole in a cell code in grid model
@@ -36,6 +36,10 @@ public class QueensEnv extends Environment {
     private QueensModel model;
     private QueensView  view;
 	private int queensPlaced;
+	private int blocksPlaced;
+	private int holesPlaced;
+	private Location[] wQueens;
+	private Location[] bQueens;
 
 
     @Override
@@ -45,6 +49,10 @@ public class QueensEnv extends Environment {
         model.setView(view);
         updatePercepts();
 		queensPlaced = 0;
+		blocksPlaced = 0;
+		holesPlaced = 0;
+		wQueens = new Location[GSize/2];
+		bQueens = new Location[GSize/2];
     }
 
     @Override
@@ -56,24 +64,28 @@ public class QueensEnv extends Environment {
                 int y = (int)((NumberTerm)action.getTerm(1)).solve();
                 model.moveTowards(x,y);
             } else if (action.getFunctor().equals("queen")) {
+                int x = (int)((NumberTerm)action.getTerm(0)).solve();
+				int y = (int)((NumberTerm)action.getTerm(1)).solve();
+				model.putQueen(x,y);
+            	} else if (action.getFunctor().equals("freeBB")) {
                 	int x = (int)((NumberTerm)action.getTerm(0)).solve();
 					int y = (int)((NumberTerm)action.getTerm(1)).solve();
-					model.putQueen(x,y);
-            	} else if (action.getFunctor().equals("freeBB")) {
+                	model.freeAttack(x,y);
+            		} else if (action.getFunctor().equals("clean")) {
                 		int x = (int)((NumberTerm)action.getTerm(0)).solve();
 						int y = (int)((NumberTerm)action.getTerm(1)).solve();
-                		model.freeAttack(x,y);
-            		} else if (action.getFunctor().equals("clean")) {
-                				int x = (int)((NumberTerm)action.getTerm(0)).solve();
+						model.clean(x,y);
+            			} else if (action.getFunctor().equals("block")) {
+							int x = (int)((NumberTerm)action.getTerm(0)).solve();
+							int y = (int)((NumberTerm)action.getTerm(1)).solve();
+							model.putBlock(x,y);
+							} else if (action.getFunctor().equals("hole")) {
+								int x = (int)((NumberTerm)action.getTerm(0)).solve();
 								int y = (int)((NumberTerm)action.getTerm(1)).solve();
-								model.clean(x,y);
-            				} else if (action.getFunctor().equals("block")) {
-										int x = (int)((NumberTerm)action.getTerm(0)).solve();
-										int y = (int)((NumberTerm)action.getTerm(1)).solve();
-										model.putBlock(x,y);
+								model.putHole(x,y);
 								} else {
-										return false;
-										}
+									return false;
+								}
         } catch (Exception e) {
             e.printStackTrace();
         }
@@ -144,40 +156,79 @@ public class QueensEnv extends Environment {
             add(QUEEN, x, y);
 			Literal queen = Literal.parseLiteral("queen(" + x + "," + y + ")");
 			addPercept(queen);
+			if (queensPlaced%2  == 0) {
+				wQueens[queensPlaced/2] = new Location(x,y);
+				try {
+					Thread.sleep(5000);
+        		} catch (Exception e) {}
+			} else {
+				bQueens[queensPlaced/2] = new Location(x,y);
+			};
 			queensPlaced++;
 			turn = Literal.parseLiteral("player(" + queensPlaced%2 + ")");
 			addPercept(turn);
-			cellAttacked(x,y);
+			//cellAttacked(x,y);
         }
 
 		void putBlock(int x, int y) throws Exception {
             add(BLOCK, x, y);
 			Literal block = Literal.parseLiteral("block(" + x + "," + y + ")");
 			addPercept(block);
+			blocksPlaced++;
         }
 
-        void cellAttacked(int x, int y) {
+		void putHole(int x, int y) throws Exception {
+            add(HOLE, x, y);
+			Literal hole = Literal.parseLiteral("hole(" + x + "," + y + ")");
+			addPercept(hole);
+			holesPlaced++;
+        }
+
+        /*
+		void redo(int x, int y) {
+			for (int i = 0; i < GSize; i++) {
+				if (hasObject(ATACK,i,y)) {freeAttack(i, y);};
+			};
+			for (int i = 0; i < GSize; i++) {
+				if (hasObject(ATACK,x,i)) {freeAttack(x, i);};
+			};
+			for (int i = 0; i < GSize; i++) {
+				for (int j = 0; j < GSize; j++) {
+				}
+			};
+			for (int i = 0; i < GSize; i++) {
+				for (int j = 0; j < GSize; j++) {
+				}
+			};
+			for (int i = 0; i < GSize/2; i++) {
+				if (wQueens[i].x = x) {
+				}
+			}
+
+        }
+		*/
+
+		void cellAttacked(int x, int y) {
  			Literal attackCell;
 			int col;
 			for (int i = 0; i < GSize; i++) {
-				if (i != x & isFree(ATACK, i, y) ) {
+				if (i != x) {
 					add(ATACK, i, y);
 					attackCell = Literal.parseLiteral("attack(" + i + "," + y + ")");
 					addPercept(attackCell);
 				};
 				if (i != y) {
-					if (isFree(ATACK, x, i)) {
-						add(ATACK, x, i);
-						attackCell = Literal.parseLiteral("attack(" + x + "," + i + ")");
-					addPercept(attackCell);};
-					col= x-i+y;
-					if ((0 <= col) & (GSize > col) & isFree(ATACK, col, i)) {
+					add(ATACK, x, i);
+					attackCell = Literal.parseLiteral("attack(" + x + "," + i + ")");
+					addPercept(attackCell);
+					if ((0 <= x-i+y) & (GSize > x-i+y)) {
+						col= x-i+y;
 						add(ATACK, col, i);
 						attackCell = Literal.parseLiteral("attack(" + col + "," + i + ")");
 						addPercept(attackCell);
 					};
-					col= x+i-y;
-					if ((GSize > col) & (0 <= col) & isFree(ATACK, col, i)){
+					if ((GSize > x+i-y) & (0 <= x+i-y)){
+						col= x+i-y;
 						add(ATACK, col, i);
 						attackCell = Literal.parseLiteral("attack(" + col + "," + i + ")");
 						addPercept(attackCell);
@@ -223,6 +274,7 @@ public class QueensEnv extends Environment {
                 case QueensEnv.QUEEN: drawQueen(g, x, y);  break;
                 case QueensEnv.ATACK: drawAtack(g, x, y);  break;
                 case QueensEnv.BLOCK: drawObstacle(g, x, y);  break;
+                case QueensEnv.HOLE:  drawHole(g, x, y);  break;
             }
         }
 
@@ -248,13 +300,19 @@ public class QueensEnv extends Environment {
          }
 
 		public void drawAtack(Graphics g, int x, int y) {
-			if (queensPlaced%2==1){
+			if (queensPlaced%2==0){
 				g.setColor(Color.white);
 			} else {
 				g.setColor(Color.black);
 			};
 			g.fillOval(x * cellSizeW + 2, y * cellSizeH + 2, cellSizeW - 4, cellSizeH - 4);
         }
+
+        public void drawHole(Graphics g, int x, int y) {
+			g.setColor(Color.white);
+			g.fillRect(x * cellSizeW, y * cellSizeH, cellSizeW-1, cellSizeH-1);
+			g.drawRect(x * cellSizeW, y * cellSizeH, cellSizeW, cellSizeH);
+		}
 
         public void drawQueen(Graphics g, int x, int y) {
 			BufferedImage bqImg = null;
@@ -267,9 +325,9 @@ public class QueensEnv extends Environment {
 
 			//if ((x+y)%2==0){
 			if (queensPlaced%2==1){
-				g.drawImage(bqImg, x * cellSizeW + 1, y * cellSizeH - 1, null);
+				g.drawImage(bqImg, x * cellSizeW + 2, y * cellSizeH + 2, null);
 			} else {
-				g.drawImage(wqImg, x * cellSizeW + 1, y * cellSizeH - 1, null);
+				g.drawImage(wqImg, x * cellSizeW + 2, y * cellSizeH + 2, null);
 			};
 
         }
